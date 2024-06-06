@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+    <!-- Parámetros del Puzzlebot -->
+    <arg name="robot" default="puzzlebot_1"/>
+    <arg name="robot_description_file" default="puzzlebot_lidar.xacro"/>
+    <node pkg="tf" type="static_transform_publisher" name="base_laser_to_laser_tf" args="0 0 0 0 0 1 0 base_laser_link laser 100" />
+    <!-- Parámetros de la red del robot -->
+    <arg name="robot_ip" default="10.42.0.1"/>
+
+    <!-- Parámetros de tiempo de simulación -->
+    <param name="/use_sim_time" value="false"/>
+
+    <!-- PID Parameters -->
+    <node name="puzzlebot_controller" pkg="puzzlebot_control" type="puzzlebot_control_node"/>
+
+    <include file="$(find puzzlebot_control)/launch/puzzlebot_control.launch"/>
+
+    <!-- Publicar descripción del robot desde la laptop -->
+    <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find arrow_autonomusnavigation_puzzlebot)/urdf/$(arg robot_description_file)'"/>
+
+    <!-- Robot State Publisher -->
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" output="screen">
+        <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find arrow_autonomusnavigation_puzzlebot)/urdf/$(arg robot_description_file)'"/>
+    </node>
+
+    <!-- Custom Python Nodes -->
+    <node name="Joint_State_Publisher" pkg="arrow_autonomusnavigation_puzzlebot" type="Joint_State_Publisher.py" output="screen"/> 
+    <node name="localisation" pkg="arrow_autonomusnavigation_puzzlebot" type="localisation.py" output="screen"/>     
+    <node name="Cordinate_Transform" pkg="arrow_autonomusnavigation_puzzlebot" type="Cordinate_Transform.py" output="screen"/>     
+
+    <!-- Navigation Nodes -->
+    <include file="$(find arrow_autonomusnavigation_puzzlebot)/launch/include/nav_stack/amcl.launch"/>
+    <include file="$(find arrow_autonomusnavigation_puzzlebot)/launch/include/nav_stack/move_base.launch"/>
+    <include file="$(find arrow_autonomusnavigation_puzzlebot)/launch/include/rviz/rviz_launch_nav_2d.launch"/>
+
+    <!-- Parámetros de tiempo de simulación -->
+    <param name="/use_sim_time" value="false"/>
+</launch>
